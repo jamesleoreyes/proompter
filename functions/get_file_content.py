@@ -1,10 +1,10 @@
 import os
-from helpers.config import MAX_CHARS
+from config.app import AppConfig
 from google.genai import types
 
 schema_get_file_content = types.FunctionDeclaration(
   name="get_file_content",
-  description=f"Lists the contents of a specified file, truncated at {MAX_CHARS} characters.",
+  description=f"Lists the contents of a specified file, truncated at {AppConfig().MAX_CHARS} characters.",
   parameters=types.Schema(
     type=types.Type.OBJECT,
     properties={
@@ -31,8 +31,8 @@ def get_file_content(working_directory: str, file_path: str):
     with open(full_file_path, 'r') as file:
       file_contents = file.read()
       
-      if len(file_contents) > MAX_CHARS:
-        file_contents = file_contents[:MAX_CHARS]
+      if len(file_contents) > AppConfig().MAX_CHARS:
+        file_contents = file_contents[:AppConfig().MAX_CHARS]
         file_contents += f'[...File "{file_path}" truncated at 10000 characters]'
     
     return file_contents
