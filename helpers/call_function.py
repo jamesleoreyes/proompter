@@ -19,58 +19,24 @@ def call_function(function_call_part: types.FunctionCall, verbose=False):
         "working_directory": "./calculator"
     }
     
+    def _response(name: str, payload: dict):
+        return types.Content(
+            role="model",
+            parts=[types.Part.from_function_response(name=name, response=payload)]
+        )
+    
     match function_name:
         case 'get_files_info':
             result = get_files_info(**kwargs)
-            return types.Content(
-                role="tool",
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_name,
-                        response={"result": result},
-                    )
-                ],
-            )
+            return _response(function_name, {'result': result})
         case 'get_file_content':
             result = get_file_content(**kwargs)
-            return types.Content(
-                role="tool",
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_name,
-                        response={"result": result},
-                    )
-                ],
-            )
+            return _response(function_name, {'result': result})
         case 'run_python_file':
             result = run_python_file(**kwargs)
-            return types.Content(
-                role="tool",
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_name,
-                        response={"result": result},
-                    )
-                ],
-            )
+            return _response(function_name, {'result': result})
         case 'write_file':
             result = write_file(**kwargs)
-            return types.Content(
-                role="tool",
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_name,
-                        response={"result": result},
-                    )
-                ],
-            )
+            return _response(function_name, {'result': result})
         case _:
-            return types.Content(
-                role='tool',
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_name,
-                        response={"error": f"Unknown function: {function_name}"}
-                    )
-                ]
-            )
+            return _response(function_name, {'error': f'Unknown function: {function_name}'})

@@ -23,26 +23,55 @@ messages = [
     types.Content(role='user', parts=[types.Part(text=args.user_prompt)])
 ]
 
-response = client.models.generate_content(
-    model='gemini-2.0-flash-001',
-    contents=messages,
-    config=types.GenerateContentConfig(
-        tools=[GeminiConfig().FUNCTIONS],
-        system_instruction=GeminiConfig().SYSTEM_PROMPT
-    )
-)
+for _ in range(51):
+    try: 
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-001',
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[GeminiConfig().FUNCTIONS],
+                system_instruction=GeminiConfig().SYSTEM_PROMPT
+            )
+        )
+            
+        if not response.candidates or not response.candidates[0].content:
+            print('ERROR: Received invalid response from API')
+            break
+            
+        if response.text and not response.function_calls:
+            print(f'Final Response:\n{response.text}')
+            break
 
-if response.function_calls:
-    for function_call in response.function_calls:
-        function_call_result = call_function(function_call)
-        if not function_call_result.parts[0].function_response.response:
-            raise Exception('Error: Function call did not return a valid response')
-        elif args.verbose:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-else:
-    print(response.text or "")
-    
-if args.verbose:
-    print(f'User prompt: {args.user_prompt}')
-    print(f'Prompt tokens: {response.usage_metadata.prompt_token_count}')
-    print(f'Response tokens: ${response.usage_metadata.candidates_token_count}')
+        model_content = response.candidates[0].content
+        if model_content and model_content.parts:
+            messages.append(model_content)
+        else:
+            print('WARNING: Response has no parts, skipping append')
+            if args.verbose:
+                print(f'Response object: {response}')
+            break
+
+        if response.function_calls:
+            function_response_parts = []
+            for function_call in response.function_calls:
+                function_call_result = call_function(function_call)
+                if not function_call_result.parts[0].function_response.response:
+                    raise Exception('Error: Function call did not return a valid response')
+                elif args.verbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+            
+                function_response_parts.extend(function_call_result.parts)
+                
+            messages.append(types.Content(
+                role='user',
+                parts=function_response_parts
+            ))
+        else:
+            print(response.text or "")
+            
+        if args.verbose:
+            print(f'User prompt: {args.user_prompt}')
+            print(f'Prompt tokens: {response.usage_metadata.prompt_token_count}')
+            print(f'Response tokens: ${response.usage_metadata.candidates_token_count}')
+    except Exception as e:
+        raise RuntimeError(f'An error occurred while generating a response: {e}')

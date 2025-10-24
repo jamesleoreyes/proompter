@@ -7,6 +7,7 @@ schema_get_file_content = types.FunctionDeclaration(
   description=f"Lists the contents of a specified file, truncated at {AppConfig().MAX_CHARS} characters.",
   parameters=types.Schema(
     type=types.Type.OBJECT,
+    required=['file_path'],
     properties={
       "file_path": types.Schema(
         type=types.Type.STRING,
