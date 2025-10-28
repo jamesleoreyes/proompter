@@ -55,6 +55,8 @@ for _ in range(51):
             function_response_parts = []
             for function_call in response.function_calls:
                 function_call_result = call_function(function_call)
+                if not function_call_result.parts or not function_call_result.parts[0].function_response:
+                    raise Exception('Error: This function call returned no parts or a response')
                 if not function_call_result.parts[0].function_response.response:
                     raise Exception('Error: Function call did not return a valid response')
                 elif args.verbose:
@@ -71,7 +73,8 @@ for _ in range(51):
             
         if args.verbose:
             print(f'User prompt: {args.user_prompt}')
-            print(f'Prompt tokens: {response.usage_metadata.prompt_token_count}')
-            print(f'Response tokens: ${response.usage_metadata.candidates_token_count}')
+            if response.usage_metadata:
+                print(f'Prompt tokens: {response.usage_metadata.prompt_token_count}')
+                print(f'Response tokens: ${response.usage_metadata.candidates_token_count}')
     except Exception as e:
         raise RuntimeError(f'An error occurred while generating a response: {e}')

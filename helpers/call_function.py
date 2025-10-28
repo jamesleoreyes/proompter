@@ -1,3 +1,4 @@
+from typing import Any
 from google.genai import types
 
 from functions.get_file_content import get_file_content
@@ -8,6 +9,12 @@ from functions.write_file import write_file
 def call_function(function_call_part: types.FunctionCall, verbose=False):
     function_name = function_call_part.name
     function_args = function_call_part.args
+    
+    if not function_name or not function_args:
+        return types.Content(
+            role='model',
+            parts=[types.Part.from_function_response(name='Unkown', response={'result': 'This tool call has no function name or function args. Please ensure a name and/or args are passed, based on the called tool\'s requirements.'})]
+        )
 
     if verbose:
         print(f"Calling function: {function_name}({function_args})")
